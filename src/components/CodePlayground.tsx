@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import CodeEditor from './CodeEditor';
 import Terminal from './Terminal';
@@ -61,7 +62,12 @@ const CodePlayground: React.FC = () => {
     }
   };
 
-  const handleRun = useCallback(() => {
+  const handleRun = useCallback((codeToRun: string) => {
+    if (codeToRun === 'clear') {
+      setTerminalOutput([{ type: 'info', content: 'Terminal cleared.' }]);
+      return;
+    }
+    
     // Clear previous output
     setTerminalOutput([{ type: 'info', content: 'Running code...' }]);
 
@@ -167,9 +173,11 @@ const CodePlayground: React.FC = () => {
           <Card className="min-h-[400px] flex flex-col">
             <CardContent className="p-3 flex-1">
               <Terminal 
-                onRun={handleRun} 
+                onRun={handleRun}
+                code={code}
                 waitingForInput={isWaitingForInput}
                 onInputSubmit={handleInput}
+                terminalOutput={terminalOutput}
                 className="h-full"
               />
             </CardContent>
@@ -197,8 +205,10 @@ const CodePlayground: React.FC = () => {
               <TabsContent value="terminal" className="h-[450px] px-4 pb-4">
                 <Terminal 
                   onRun={handleRun} 
+                  code={code}
                   waitingForInput={isWaitingForInput}
                   onInputSubmit={handleInput}
+                  terminalOutput={terminalOutput}
                   className="h-full" 
                 />
               </TabsContent>
@@ -215,7 +225,7 @@ const CodePlayground: React.FC = () => {
           {codeExamples.find(ex => ex.id === selectedExample)?.description || 'Write and run your own JavaScript code.'}
         </p>
         <div className="mt-4 flex justify-center">
-          <Button onClick={handleRun} className="bg-primary hover:bg-primary/90">
+          <Button onClick={() => handleRun(code)} className="bg-primary hover:bg-primary/90">
             Run Code
           </Button>
         </div>

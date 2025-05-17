@@ -8,42 +8,35 @@ import { Play } from 'lucide-react';
 
 interface TerminalProps {
   onRun: (code: string) => void;
+  code?: string;
   className?: string;
   theme?: 'light' | 'dark';
   waitingForInput?: boolean;
   onInputSubmit?: (input: string) => void;
-}
-
-interface TerminalOutput {
-  type: 'output' | 'error' | 'info' | 'input';
-  content: string;
+  terminalOutput: { type: 'output' | 'error' | 'info' | 'input'; content: string }[];
 }
 
 const Terminal: React.FC<TerminalProps> = ({
   onRun,
+  code = '',
   className,
   theme = 'dark',
   waitingForInput = false,
-  onInputSubmit
+  onInputSubmit,
+  terminalOutput
 }) => {
-  const [output, setOutput] = useState<TerminalOutput[]>([
-    { type: 'info', content: 'Welcome to Code Playground Terminal! Click "Run" to execute your code.' }
-  ]);
   const [inputValue, setInputValue] = useState('');
   const terminalRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const clearOutput = () => {
-    setOutput([{ type: 'info', content: 'Terminal cleared.' }]);
+    onRun('clear');
   };
 
   const handleInputSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputValue.trim()) return;
 
-    // Add the input to the terminal output
-    setOutput(prev => [...prev, { type: 'input', content: inputValue }]);
-    
     // Call the onInputSubmit callback with the input value
     if (onInputSubmit) {
       onInputSubmit(inputValue);
@@ -58,7 +51,7 @@ const Terminal: React.FC<TerminalProps> = ({
     if (terminalRef.current) {
       terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
     }
-  }, [output]);
+  }, [terminalOutput]);
 
   // Focus the input field when waiting for input
   useEffect(() => {
@@ -92,7 +85,7 @@ const Terminal: React.FC<TerminalProps> = ({
         className="flex-1 p-3 overflow-y-auto font-mono text-sm"
         style={{ maxHeight: '300px' }}
       >
-        {output.map((line, i) => (
+        {terminalOutput.map((line, i) => (
           <div 
             key={i} 
             className={cn(
@@ -125,7 +118,7 @@ const Terminal: React.FC<TerminalProps> = ({
       
       <div className="p-2 flex justify-end">
         <Button 
-          onClick={() => onRun('Run clicked')}
+          onClick={() => onRun(code)}
           className="bg-green-600 hover:bg-green-700 text-white"
           size="sm"
         >
