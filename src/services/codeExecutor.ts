@@ -1,9 +1,8 @@
 
 type OutputCallback = (type: 'output' | 'error' | 'info', content: string) => void;
-type InputHandler = (callback: (input: string) => void) => void;
 
 class CodeExecutor {
-  private waitForInput: InputHandler | null = null;
+  private waitForInput: ((input: string) => void) | null = null;
 
   /**
    * Execute JavaScript code with console output captured
@@ -46,9 +45,9 @@ class CodeExecutor {
       const prompt = (message: string): Promise<string> => {
         return new Promise((resolve) => {
           outputCallback('info', message || 'Enter input:');
-          this.waitForInput = (callback) => {
+          this.waitForInput = (input: string) => {
             this.waitForInput = null;
-            resolve(callback);
+            resolve(input);
           };
         });
       };

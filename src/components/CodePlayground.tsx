@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import CodeEditor from './CodeEditor';
 import Terminal from './Terminal';
@@ -9,7 +8,7 @@ import { cn } from '@/lib/utils';
 import { codeExamples } from '@/data/codeExamples';
 import codeExecutor from '@/services/codeExecutor';
 import { Save, Trash, Columns } from 'lucide-react';
-import { useToast } from '@/components/ui/toaster';
+import { useToast } from '@/hooks/use-toast';
 
 interface TerminalMessage {
   type: 'output' | 'error' | 'info' | 'input';
