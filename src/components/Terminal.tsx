@@ -7,13 +7,14 @@ import { cn } from '@/lib/utils';
 import { Play } from 'lucide-react';
 
 interface TerminalProps {
-  onRun: (code: string) => void;
+  onRun: (code: string, language: string) => void;
   code?: string;
   className?: string;
   theme?: 'light' | 'dark';
   waitingForInput?: boolean;
   onInputSubmit?: (input: string) => void;
   terminalOutput: { type: 'output' | 'error' | 'info' | 'input'; content: string }[];
+  language?: string;
 }
 
 const Terminal: React.FC<TerminalProps> = ({
@@ -23,14 +24,15 @@ const Terminal: React.FC<TerminalProps> = ({
   theme = 'dark',
   waitingForInput = false,
   onInputSubmit,
-  terminalOutput
+  terminalOutput,
+  language = 'javascript'
 }) => {
   const [inputValue, setInputValue] = useState('');
   const terminalRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const clearOutput = () => {
-    onRun('clear');
+    onRun('clear', language);
   };
 
   const handleInputSubmit = (e: React.FormEvent) => {
@@ -94,8 +96,8 @@ const Terminal: React.FC<TerminalProps> = ({
               line.type === 'info' ? 'text-blue-400' : 
               line.type === 'input' ? 'text-yellow-400 terminal-input-line' : 'text-gray-300'
             )}
+            dangerouslySetInnerHTML={{ __html: line.content }}
           >
-            {line.content}
           </div>
         ))}
         
@@ -118,7 +120,7 @@ const Terminal: React.FC<TerminalProps> = ({
       
       <div className="p-2 flex justify-end">
         <Button 
-          onClick={() => onRun(code)}
+          onClick={() => onRun(code, language)}
           className="bg-green-600 hover:bg-green-700 text-white"
           size="sm"
         >

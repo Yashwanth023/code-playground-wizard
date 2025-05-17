@@ -3,6 +3,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { EditorState } from '@codemirror/state';
 import { EditorView, keymap } from '@codemirror/view';
 import { javascript } from '@codemirror/lang-javascript';
+import { python } from '@codemirror/lang-python';
+import { html } from '@codemirror/lang-html';
+import { css } from '@codemirror/lang-css';
 import { indentWithTab } from '@codemirror/commands';
 import { oneDark } from '@codemirror/theme-one-dark';
 import { cn } from '@/lib/utils';
@@ -12,13 +15,15 @@ interface CodeEditorProps {
   onChange?: (code: string) => void;
   className?: string;
   theme?: 'light' | 'dark';
+  language?: 'javascript' | 'python' | 'html' | 'css';
 }
 
 const CodeEditor: React.FC<CodeEditorProps> = ({
   initialValue = '// Write your JavaScript code here\n\nfunction greet(name) {\n  return `Hello, ${name}!`;\n}\n\nconsole.log(greet("World"));',
   onChange,
   className,
-  theme = 'dark'
+  theme = 'dark',
+  language = 'javascript'
 }) => {
   const editorRef = useRef<HTMLDivElement>(null);
   const [editorView, setEditorView] = useState<EditorView | null>(null);
@@ -31,9 +36,26 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
       editorView.destroy();
     }
 
+    // Set up language extension based on selected language
+    let languageExtension;
+    switch (language) {
+      case 'python':
+        languageExtension = python();
+        break;
+      case 'html':
+        languageExtension = html();
+        break;
+      case 'css':
+        languageExtension = css();
+        break;
+      case 'javascript':
+      default:
+        languageExtension = javascript();
+    }
+
     // Set up extensions
     const extensions = [
-      javascript(),
+      languageExtension,
       keymap.of([indentWithTab]),
       EditorView.updateListener.of((update) => {
         if (update.docChanged && onChange) {
@@ -76,7 +98,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
         view.destroy();
       }
     };
-  }, [editorRef, initialValue, onChange, theme]);
+  }, [editorRef, initialValue, onChange, theme, language]);
 
   return (
     <div 

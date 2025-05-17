@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { codeExamples } from '@/data/codeExamples';
+import { languageExamples } from '@/data/languageExamples';
 import codeExecutor from '@/services/codeExecutor';
 import { Save, Trash, Columns } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -16,6 +17,8 @@ interface TerminalMessage {
   content: string;
 }
 
+type SupportedLanguage = 'javascript' | 'python' | 'html' | 'css';
+
 const CodePlayground: React.FC = () => {
   const [code, setCode] = useState(codeExamples[0].code);
   const [terminalOutput, setTerminalOutput] = useState<TerminalMessage[]>([
@@ -24,12 +27,26 @@ const CodePlayground: React.FC = () => {
   const [selectedExample, setSelectedExample] = useState<string>(codeExamples[0].id);
   const [isWaitingForInput, setIsWaitingForInput] = useState(false);
   const [layout, setLayout] = useState<'split' | 'tabs'>('split');
+  const [language, setLanguage] = useState<SupportedLanguage>('javascript');
   
   const { toast } = useToast();
+
+  // Load initial code based on language when language changes
+  useEffect(() => {
+    if (languageExamples[language]) {
+      setCode(languageExamples[language].initialCode);
+    }
+  }, [language]);
 
   // Save code to localStorage
   useEffect(() => {
     const savedCode = localStorage.getItem('savedCode');
+    const savedLanguage = localStorage.getItem('savedLanguage') as SupportedLanguage | null;
+    
+    if (savedLanguage) {
+      setLanguage(savedLanguage);
+    }
+    
     if (savedCode) {
       setCode(savedCode);
     }
@@ -37,15 +54,17 @@ const CodePlayground: React.FC = () => {
 
   const saveCode = () => {
     localStorage.setItem('savedCode', code);
+    localStorage.setItem('savedLanguage', language);
     toast({
       title: "Code saved",
-      description: "Your code has been saved to local storage.",
+      description: `Your ${language} code has been saved to local storage.`,
       duration: 3000,
     });
   };
 
   const clearSavedCode = () => {
     localStorage.removeItem('savedCode');
+    localStorage.removeItem('savedLanguage');
     toast({
       title: "Saved code cleared",
       description: "Your saved code has been removed from local storage.",
@@ -59,21 +78,30 @@ const CodePlayground: React.FC = () => {
     if (example) {
       setCode(example.code);
       setSelectedExample(exampleId);
+      setLanguage('javascript'); // JavaScript examples are from the original collection
     }
   };
 
-  const handleRun = useCallback((codeToRun: string) => {
+  const handleLanguageChange = (newLanguage: SupportedLanguage) => {
+    setLanguage(newLanguage);
+    if (languageExamples[newLanguage]) {
+      setCode(languageExamples[newLanguage].initialCode);
+    }
+  };
+
+  const handleRun = useCallback((codeToRun: string, lang: string = language) => {
     if (codeToRun === 'clear') {
       setTerminalOutput([{ type: 'info', content: 'Terminal cleared.' }]);
       return;
     }
     
     // Clear previous output
-    setTerminalOutput([{ type: 'info', content: 'Running code...' }]);
+    setTerminalOutput([{ type: 'info', content: `Running ${lang} code...` }]);
 
     // Execute the code
-    codeExecutor.executeJavaScript(
+    codeExecutor.executeCode(
       code,
+      lang as SupportedLanguage,
       (type, content) => {
         setTerminalOutput(prev => [...prev, { type, content }]);
       }
@@ -89,7 +117,7 @@ const CodePlayground: React.FC = () => {
     }, 100);
 
     return () => clearInterval(checkInputStatus);
-  }, [code]);
+  }, [code, language]);
 
   const handleInput = (input: string) => {
     codeExecutor.handleInput(input);
@@ -138,24 +166,68 @@ const CodePlayground: React.FC = () => {
         </div>
       </div>
 
+      {/* Language Selector */}
       <div className="flex flex-wrap gap-4">
-        <div className="flex-1 min-w-[200px]">
-          <h3 className="text-sm font-medium mb-2">Examples</h3>
+        <div className="flex-1">
+          <h3 className="text-sm font-medium mb-2">Programming Language</h3>
           <div className="flex flex-wrap gap-2">
-            {codeExamples.map((example) => (
-              <Button 
-                key={example.id}
-                variant={selectedExample === example.id ? "default" : "outline"}
-                size="sm"
-                onClick={() => handleExampleChange(example.id)}
-                className="text-xs"
-              >
-                {example.title}
-              </Button>
-            ))}
+            <Button 
+              variant={language === 'javascript' ? "default" : "outline"}
+              size="sm"
+              onClick={() => handleLanguageChange('javascript')}
+              className="text-xs"
+            >
+              JavaScript
+            </Button>
+            <Button 
+              variant={language === 'python' ? "default" : "outline"}
+              size="sm"
+              onClick={() => handleLanguageChange('python')}
+              className="text-xs"
+            >
+              Python
+            </Button>
+            <Button 
+              variant={language === 'html' ? "default" : "outline"}
+              size="sm"
+              onClick={() => handleLanguageChange('html')}
+              className="text-xs"
+            >
+              HTML
+            </Button>
+            <Button 
+              variant={language === 'css' ? "default" : "outline"}
+              size="sm"
+              onClick={() => handleLanguageChange('css')}
+              className="text-xs"
+            >
+              CSS
+            </Button>
           </div>
         </div>
       </div>
+
+      {/* Examples (only show for JavaScript) */}
+      {language === 'javascript' && (
+        <div className="flex flex-wrap gap-4">
+          <div className="flex-1 min-w-[200px]">
+            <h3 className="text-sm font-medium mb-2">JavaScript Examples</h3>
+            <div className="flex flex-wrap gap-2">
+              {codeExamples.map((example) => (
+                <Button 
+                  key={example.id}
+                  variant={selectedExample === example.id ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handleExampleChange(example.id)}
+                  className="text-xs"
+                >
+                  {example.title}
+                </Button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {layout === 'split' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -166,6 +238,7 @@ const CodePlayground: React.FC = () => {
                 initialValue={code} 
                 onChange={setCode}
                 className="h-full min-h-[350px]"
+                language={language}
               />
             </CardContent>
           </Card>
@@ -179,6 +252,7 @@ const CodePlayground: React.FC = () => {
                 onInputSubmit={handleInput}
                 terminalOutput={terminalOutput}
                 className="h-full"
+                language={language}
               />
             </CardContent>
           </Card>
@@ -199,6 +273,7 @@ const CodePlayground: React.FC = () => {
                   initialValue={code} 
                   onChange={setCode}
                   className="h-full" 
+                  language={language}
                 />
               </TabsContent>
               
@@ -210,6 +285,7 @@ const CodePlayground: React.FC = () => {
                   onInputSubmit={handleInput}
                   terminalOutput={terminalOutput}
                   className="h-full" 
+                  language={language}
                 />
               </TabsContent>
             </Tabs>
@@ -219,10 +295,12 @@ const CodePlayground: React.FC = () => {
 
       <div className="mt-4">
         <h3 className="text-lg font-medium mb-2">
-          {codeExamples.find(ex => ex.id === selectedExample)?.title || 'Custom Code'} 
+          {language === 'javascript' && codeExamples.find(ex => ex.id === selectedExample)?.title || 
+           `${language.charAt(0).toUpperCase() + language.slice(1)} Code`}
         </h3>
         <p className="text-muted-foreground">
-          {codeExamples.find(ex => ex.id === selectedExample)?.description || 'Write and run your own JavaScript code.'}
+          {language === 'javascript' && codeExamples.find(ex => ex.id === selectedExample)?.description || 
+           `Write and run your own ${language} code.`}
         </p>
         <div className="mt-4 flex justify-center">
           <Button onClick={() => handleRun(code)} className="bg-primary hover:bg-primary/90">
