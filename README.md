@@ -127,6 +127,3 @@ npm run build
 5. For input-required code, respond to prompts in the terminal
 6. Save your code using the "Save" button for future sessions
 
-## License
-
-MIT
