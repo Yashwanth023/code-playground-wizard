@@ -1,3 +1,4 @@
+
 type OutputCallback = (type: 'output' | 'error' | 'info', content: string) => void;
 type SupportedLanguage = 'javascript' | 'python' | 'html' | 'css' | 'c';
 
@@ -110,34 +111,59 @@ class CodeExecutor {
    * Load JSCPP (C in browser) from CDN
    */
   private loadJSCPP(): Promise<void> {
-    if (window.jscppReady) {
+    // Check if JSCPP is already loaded and ready
+    if (window.jscppReady && window.JSCPP) {
+      console.log('JSCPP is already loaded and ready');
       return Promise.resolve();
     }
 
-    if (this.jscppLoadAttempted) {
+    // If we've already tried to load JSCPP and failed, don't try again
+    if (this.jscppLoadAttempted && !window.jscppReady) {
+      console.error('JSCPP loading previously failed, not trying again');
       return Promise.reject(new Error("Failed to load JSCPP after previous attempt"));
     }
 
     this.jscppLoadAttempted = true;
+    console.log('Starting to load JSCPP...');
 
     return new Promise<void>((resolve, reject) => {
       try {
+        // Remove any previous JSCPP script to avoid conflicts
+        const existingScript = document.getElementById('jscpp-script');
+        if (existingScript) {
+          document.head.removeChild(existingScript);
+        }
+
+        // Create a new script element
         const jscppScript = document.createElement('script');
+        jscppScript.id = 'jscpp-script';
         jscppScript.src = 'https://cdn.jsdelivr.net/npm/jscpp@2.0.2/dist/JSCPP.es5.min.js';
         jscppScript.async = true;
+        jscppScript.crossOrigin = 'anonymous';
 
+        // Handle successful loading
         jscppScript.onload = () => {
-          console.log('JSCPP loaded successfully');
-          window.jscppReady = true;
-          resolve();
+          // Check if JSCPP is actually available in the window object
+          if (window.JSCPP) {
+            console.log('JSCPP loaded successfully and is available in window');
+            window.jscppReady = true;
+            resolve();
+          } else {
+            console.error('JSCPP script loaded but JSCPP is not available in window');
+            outputCallback('error', 'Failed to initialize JSCPP correctly');
+            reject(new Error('JSCPP script loaded but JSCPP is not available'));
+          }
         };
 
+        // Handle loading errors
         jscppScript.onerror = (error) => {
           console.error('Failed to load JSCPP:', error);
-          reject(new Error('Failed to load JSCPP'));
+          reject(new Error('Failed to load JSCPP. Network error or invalid URL.'));
         };
 
+        // Add the script to the document
         document.head.appendChild(jscppScript);
+        console.log('JSCPP script added to document head');
       } catch (error) {
         console.error('Error during JSCPP loading:', error);
         reject(error);
@@ -353,21 +379,30 @@ class CodeExecutor {
     try {
       outputCallback('info', 'Loading C interpreter...');
       
-      await this.loadJSCPP();
+      try {
+        await this.loadJSCPP();
+        console.log('JSCPP load completed successfully');
+      } catch (loadError) {
+        console.error('JSCPP loading failed:', loadError);
+        outputCallback('error', `Failed to load C interpreter: ${loadError instanceof Error ? loadError.message : 'Unknown error'}`);
+        return;
+      }
       
       if (!window.JSCPP) {
-        outputCallback('error', 'Failed to load C interpreter. Please try again or refresh the page.');
+        console.error('JSCPP is not available after successful loading');
+        outputCallback('error', 'Failed to initialize C interpreter. Please try refreshing the page.');
         return;
       }
       
       outputCallback('info', 'Running C code...');
+      console.log('Preparing to run C code with JSCPP');
       
       // Setup C input handler
       let inputBuffer: string[] = [];
       let inputIndex = 0;
       
       // Create custom input function
-      const getInput = (): Promise<string> => {
+      const getInput = async (): Promise<string> => {
         return new Promise<string>((resolve) => {
           if (inputIndex < inputBuffer.length) {
             // Use existing input if available
@@ -401,7 +436,7 @@ class CodeExecutor {
       
       // Execute the C code
       try {
-        console.log('Executing C code with JSCPP...');
+        console.log('Executing C code with JSCPP...', code.slice(0, 50) + '...');
         const result = window.JSCPP.run(code, '', config);
         console.log('C code execution completed, result:', result);
         if (result !== undefined && result !== null && result !== '') {
