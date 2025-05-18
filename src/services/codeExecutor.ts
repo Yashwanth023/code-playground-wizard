@@ -1,3 +1,4 @@
+
 type OutputCallback = (type: 'output' | 'error' | 'info', content: string) => void;
 type SupportedLanguage = 'javascript' | 'python' | 'html' | 'css' | 'c';
 
@@ -8,6 +9,7 @@ declare global {
     loadSkulpt?: () => Promise<void>;
     pythonInput?: (prompt: string) => Promise<string>;
     Module?: any; // For JSCPP (C language support)
+    JSCPP?: any; // Adding JSCPP to the window type
   }
 }
 
@@ -336,7 +338,7 @@ class CodeExecutor {
   /**
    * Execute C code using JSCPP
    */
-  private async executeC(code: string, outputCallback: OutputCallback): void {
+  private async executeC(code: string, outputCallback: OutputCallback): Promise<void> {
     try {
       outputCallback('info', 'Loading C interpreter...');
       
@@ -354,7 +356,7 @@ class CodeExecutor {
       let inputIndex = 0;
       
       // Create custom input function
-      const getInput = () => {
+      const getInput = (): Promise<string> => {
         return new Promise<string>((resolve) => {
           if (inputIndex < inputBuffer.length) {
             // Use existing input if available
@@ -421,3 +423,4 @@ class CodeExecutor {
 }
 
 export default new CodeExecutor();
+
