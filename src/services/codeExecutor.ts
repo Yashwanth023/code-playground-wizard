@@ -1,3 +1,4 @@
+
 type OutputCallback = (type: 'output' | 'error' | 'info', content: string) => void;
 type SupportedLanguage = 'javascript' | 'python' | 'html' | 'css' | 'c';
 
@@ -133,10 +134,10 @@ class CodeExecutor {
           document.head.removeChild(existingScript);
         }
 
-        // Create a new script element
+        // Create a new script element with an alternative CDN
         const jscppScript = document.createElement('script');
         jscppScript.id = 'jscpp-script';
-        jscppScript.src = 'https://cdn.jsdelivr.net/npm/jscpp@2.0.2/dist/JSCPP.es5.min.js';
+        jscppScript.src = 'https://unpkg.com/jscpp@2.0.2/dist/JSCPP.es5.min.js';
         jscppScript.async = true;
         jscppScript.crossOrigin = 'anonymous';
 
@@ -154,9 +155,32 @@ class CodeExecutor {
         };
 
         // Handle loading errors
-        jscppScript.onerror = (error) => {
-          console.error('Failed to load JSCPP:', error);
-          reject(new Error('Failed to load JSCPP. Network error or invalid URL.'));
+        jscppScript.onerror = () => {
+          console.error('Failed to load JSCPP from unpkg, trying fallback source');
+          
+          // Try a fallback source if the first one fails
+          const fallbackScript = document.createElement('script');
+          fallbackScript.id = 'jscpp-script-fallback';
+          fallbackScript.src = 'https://cdn.jsdelivr.net/npm/jscpp@2.0.2/dist/JSCPP.min.js';
+          fallbackScript.async = true;
+          
+          fallbackScript.onload = () => {
+            if (window.JSCPP) {
+              console.log('JSCPP loaded successfully from fallback source');
+              window.jscppReady = true;
+              resolve();
+            } else {
+              console.error('JSCPP fallback script loaded but JSCPP is not available in window');
+              reject(new Error('JSCPP fallback loading failed'));
+            }
+          };
+          
+          fallbackScript.onerror = (error) => {
+            console.error('Both JSCPP loading attempts failed');
+            reject(new Error('Failed to load JSCPP from all sources. Please try again later.'));
+          };
+          
+          document.head.appendChild(fallbackScript);
         };
 
         // Add the script to the document
@@ -380,6 +404,7 @@ class CodeExecutor {
       try {
         await this.loadJSCPP();
         console.log('JSCPP load completed successfully');
+        outputCallback('info', 'C interpreter loaded successfully.');
       } catch (loadError) {
         console.error('JSCPP loading failed:', loadError);
         outputCallback('error', `Failed to load C interpreter: ${loadError instanceof Error ? loadError.message : 'Unknown error'}`);
