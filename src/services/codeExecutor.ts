@@ -1,4 +1,3 @@
-
 type OutputCallback = (type: 'output' | 'error' | 'info', content: string) => void;
 type SupportedLanguage = 'javascript' | 'python' | 'html' | 'css' | 'c';
 
@@ -10,15 +9,18 @@ declare global {
     pythonInput?: (prompt: string) => Promise<string>;
     Module?: any; // For JSCPP (C language support)
     JSCPP?: any; // Adding JSCPP to the window type
+    jscppReady?: boolean; // Flag to track if JSCPP is loaded
   }
 }
 
 class CodeExecutor {
   private waitForInput: ((input: string) => void) | null = null;
   private skulptLoadAttempted = false;
+  private jscppLoadAttempted = false;
 
   constructor() {
     this.loadSkulptIfNeeded = this.loadSkulptIfNeeded.bind(this);
+    this.loadJSCPP = this.loadJSCPP.bind(this);
   }
 
   /**
@@ -108,9 +110,15 @@ class CodeExecutor {
    * Load JSCPP (C in browser) from CDN
    */
   private loadJSCPP(): Promise<void> {
-    if (window.Module) {
+    if (window.jscppReady) {
       return Promise.resolve();
     }
+
+    if (this.jscppLoadAttempted) {
+      return Promise.reject(new Error("Failed to load JSCPP after previous attempt"));
+    }
+
+    this.jscppLoadAttempted = true;
 
     return new Promise<void>((resolve, reject) => {
       try {
@@ -120,15 +128,18 @@ class CodeExecutor {
 
         jscppScript.onload = () => {
           console.log('JSCPP loaded successfully');
+          window.jscppReady = true;
           resolve();
         };
 
-        jscppScript.onerror = () => {
+        jscppScript.onerror = (error) => {
+          console.error('Failed to load JSCPP:', error);
           reject(new Error('Failed to load JSCPP'));
         };
 
         document.head.appendChild(jscppScript);
       } catch (error) {
+        console.error('Error during JSCPP loading:', error);
         reject(error);
       }
     });
@@ -383,16 +394,21 @@ class CodeExecutor {
             const input = await getInput();
             return input;
           }
-        }
+        },
+        // Add verbose option to get more detailed error messages
+        verbose: true
       };
       
       // Execute the C code
       try {
+        console.log('Executing C code with JSCPP...');
         const result = window.JSCPP.run(code, '', config);
+        console.log('C code execution completed, result:', result);
         if (result !== undefined && result !== null && result !== '') {
           outputCallback('output', `Result: ${result}`);
         }
       } catch (error) {
+        console.error('Error during C code execution:', error);
         if (error instanceof Error) {
           outputCallback('error', `C Error: ${error.message}`);
         } else {
@@ -401,6 +417,7 @@ class CodeExecutor {
       }
       
     } catch (error) {
+      console.error('Error in executeC:', error);
       if (error instanceof Error) {
         outputCallback('error', `Error: ${error.message}`);
       } else {
@@ -423,4 +440,3 @@ class CodeExecutor {
 }
 
 export default new CodeExecutor();
-
