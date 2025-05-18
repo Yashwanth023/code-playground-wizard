@@ -1,4 +1,3 @@
-
 type OutputCallback = (type: 'output' | 'error' | 'info', content: string) => void;
 type SupportedLanguage = 'javascript' | 'python' | 'html' | 'css' | 'c';
 
@@ -150,7 +149,6 @@ class CodeExecutor {
             resolve();
           } else {
             console.error('JSCPP script loaded but JSCPP is not available in window');
-            outputCallback('error', 'Failed to initialize JSCPP correctly');
             reject(new Error('JSCPP script loaded but JSCPP is not available'));
           }
         };
