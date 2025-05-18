@@ -1,73 +1,100 @@
-# Welcome to your Lovable project
 
-## Project info
+# Code Playground
 
-**URL**: https://lovable.dev/projects/232650fb-b314-4509-97be-898a5b80aa16
+A powerful in-browser code editor that lets you write and execute code in multiple programming languages directly in your browser.
 
-## How can I edit this code?
+![Code Playground Screenshot](https://placeholder.svg/400x250/eee/999?text=Code+Playground)
 
-There are several ways of editing your application.
+## Features
 
-**Use Lovable**
+- **Multi-language Support**: Write and execute code in JavaScript, Python, HTML, and CSS
+- **Real-time Code Execution**: See the results of your code immediately
+- **Syntax Highlighting**: CodeMirror integration provides proper syntax highlighting for all supported languages
+- **Code Examples**: Pre-loaded examples to help you get started
+- **Input Support**: Interactive input for both JavaScript and Python code
+- **Dark/Light Mode**: Choose your preferred theme
+- **Responsive Layout**: Works on desktop and mobile devices
+- **Local Storage**: Save your code for future sessions
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/232650fb-b314-4509-97be-898a5b80aa16) and start prompting.
+## Supported Languages
 
-Changes made via Lovable will be committed automatically to this repo.
+### JavaScript
+Full JavaScript execution with console output and user input via prompts.
 
-**Use your preferred IDE**
+```javascript
+function greet(name) {
+  return `Hello, ${name}!`;
+}
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+console.log(greet("World"));
 ```
 
-**Edit a file directly in GitHub**
+### Python
+Python execution powered by Skulpt, with full support for:
+- Standard Python syntax
+- Print output
+- User input via the input() function
+- Error handling
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```python
+def greet(name):
+    return f"Hello, {name}!"
 
-**Use GitHub Codespaces**
+print(greet("World"))
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### HTML
+Write and preview HTML code with CSS and JavaScript support.
 
-## What technologies are used for this project?
+```html
+<div>
+  <h1>Hello World</h1>
+  <p>This HTML code is rendered in the browser.</p>
+</div>
+```
 
-This project is built with:
+### CSS
+Write CSS and see it applied to a sample HTML structure in real-time.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+```css
+body {
+  font-family: Arial;
+  color: navy;
+}
+```
 
-## How can I deploy this project?
+## Technical Implementation
 
-Simply open [Lovable](https://lovable.dev/projects/232650fb-b314-4509-97be-898a5b80aa16) and click on Share -> Publish.
+- **Frontend**: React with TypeScript
+- **UI Components**: shadcn/ui with Tailwind CSS
+- **Code Editor**: CodeMirror 6
+- **Python Execution**: Skulpt (browser-based Python interpreter)
+- **State Management**: React hooks and context
 
-## Can I connect a custom domain to my Lovable project?
+## Getting Started
 
-Yes, you can!
+To run the project locally:
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+```sh
+# Install dependencies
+npm install
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+# Start the development server
+npm run dev
+
+# Build for production
+npm run build
+```
+
+## How to Use
+
+1. Choose a programming language from the options at the top
+2. Write your code in the editor
+3. Click "Run" to execute your code
+4. See the output in the terminal panel
+5. For input-required code, respond to prompts in the terminal
+6. Save your code using the "Save" button for future sessions
+
+## License
+
+MIT

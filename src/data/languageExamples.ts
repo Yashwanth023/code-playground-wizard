@@ -19,12 +19,15 @@ console.log(greet("World"));
   python: {
     language: 'python',
     initialCode: `# Write your Python code here
-# Note: Python execution is simulated in this browser environment
 
 def greet(name):
     return f"Hello, {name}!"
 
 print(greet("World"))
+
+# You can also use input
+# name = input("What's your name? ")
+# print(f"Nice to meet you, {name}")
 `,
   },
   html: {
