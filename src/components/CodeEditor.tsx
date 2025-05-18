@@ -15,7 +15,7 @@ interface CodeEditorProps {
   onChange?: (code: string) => void;
   className?: string;
   theme?: 'light' | 'dark';
-  language?: 'javascript' | 'python' | 'html' | 'css';
+  language?: 'javascript' | 'python' | 'html' | 'css' | 'c';
 }
 
 const CodeEditor: React.FC<CodeEditorProps> = ({
@@ -47,6 +47,10 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
         break;
       case 'css':
         languageExtension = css();
+        break;
+      case 'c':
+        // For C language, we use JavaScript syntax highlighting as CodeMirror doesn't have a dedicated C language mode
+        languageExtension = javascript();
         break;
       case 'javascript':
       default:

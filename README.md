@@ -7,11 +7,11 @@ A powerful in-browser code editor that lets you write and execute code in multip
 
 ## Features
 
-- **Multi-language Support**: Write and execute code in JavaScript, Python, HTML, and CSS
+- **Multi-language Support**: Write and execute code in JavaScript, Python, HTML, CSS, and C
 - **Real-time Code Execution**: See the results of your code immediately
 - **Syntax Highlighting**: CodeMirror integration provides proper syntax highlighting for all supported languages
 - **Code Examples**: Pre-loaded examples to help you get started
-- **Input Support**: Interactive input for both JavaScript and Python code
+- **Input Support**: Interactive input for JavaScript, Python, and C code
 - **Dark/Light Mode**: Choose your preferred theme
 - **Responsive Layout**: Works on desktop and mobile devices
 - **Local Storage**: Save your code for future sessions
@@ -41,6 +41,37 @@ def greet(name):
     return f"Hello, {name}!"
 
 print(greet("World"))
+
+# You can also use input
+name = input("What's your name? ")
+print(f"Nice to meet you, {name}")
+```
+
+### C Programming
+C language execution powered by JSCPP, with support for:
+- Standard C syntax
+- Console input/output via printf/scanf
+- Basic C library functions
+- Error handling
+
+```c
+#include <stdio.h>
+
+int main() {
+    printf("Hello, World!\n");
+    
+    // Variables and arithmetic
+    int a = 5, b = 7;
+    printf("%d + %d = %d\n", a, b, a + b);
+    
+    // User input
+    int number;
+    printf("Enter a number: ");
+    scanf("%d", &number);
+    printf("You entered: %d\n", number);
+    
+    return 0;
+}
 ```
 
 ### HTML
@@ -69,6 +100,7 @@ body {
 - **UI Components**: shadcn/ui with Tailwind CSS
 - **Code Editor**: CodeMirror 6
 - **Python Execution**: Skulpt (browser-based Python interpreter)
+- **C Execution**: JSCPP (browser-based C interpreter)
 - **State Management**: React hooks and context
 
 ## Getting Started

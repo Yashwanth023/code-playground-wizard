@@ -1,6 +1,6 @@
 
 export interface LanguageExample {
-  language: 'javascript' | 'python' | 'html' | 'css';
+  language: 'javascript' | 'python' | 'html' | 'css' | 'c';
   initialCode: string;
 }
 
@@ -103,5 +103,28 @@ button:hover {
   border-left: 5px solid #3498db;
 }
 `,
+  },
+  c: {
+    language: 'c',
+    initialCode: `// Write your C code here
+#include <stdio.h>
+
+int main() {
+    printf("Hello, World!\\n");
+    
+    // Variables and arithmetic
+    int a = 5, b = 7;
+    printf("%d + %d = %d\\n", a, b, a + b);
+    
+    // Input example (uncomment to use)
+    /*
+    int number;
+    printf("Enter a number: ");
+    scanf("%d", &number);
+    printf("You entered: %d\\n", number);
+    */
+    
+    return 0;
+}`,
   }
 };

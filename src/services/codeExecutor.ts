@@ -1,6 +1,5 @@
-
 type OutputCallback = (type: 'output' | 'error' | 'info', content: string) => void;
-type SupportedLanguage = 'javascript' | 'python' | 'html' | 'css';
+type SupportedLanguage = 'javascript' | 'python' | 'html' | 'css' | 'c';
 
 declare global {
   interface Window {
@@ -8,11 +7,13 @@ declare global {
     skulptReady?: boolean;
     loadSkulpt?: () => Promise<void>;
     pythonInput?: (prompt: string) => Promise<string>;
+    Module?: any; // For JSCPP (C language support)
   }
 }
 
 class CodeExecutor {
   private waitForInput: ((input: string) => void) | null = null;
+  private skulptLoadAttempted = false;
 
   constructor() {
     this.loadSkulptIfNeeded = this.loadSkulptIfNeeded.bind(this);
@@ -39,6 +40,9 @@ class CodeExecutor {
       case 'css':
         this.executeCSS(code, outputCallback);
         break;
+      case 'c':
+        this.executeC(code, outputCallback);
+        break;
       default:
         outputCallback('error', `Unsupported language: ${language}`);
     }
@@ -52,38 +56,80 @@ class CodeExecutor {
       return Promise.resolve();
     }
 
-    if (!window.loadSkulpt) {
-      window.loadSkulpt = () => {
-        return new Promise<void>((resolve, reject) => {
-          // Load Skulpt and Skulpt standard library
-          const skulptScript = document.createElement('script');
-          skulptScript.src = 'https://skulpt.org/js/skulpt.min.js';
-          skulptScript.async = true;
-          
+    if (this.skulptLoadAttempted) {
+      return Promise.reject(new Error("Failed to load Skulpt after previous attempt"));
+    }
+
+    this.skulptLoadAttempted = true;
+
+    return new Promise<void>((resolve, reject) => {
+      try {
+        // Load Skulpt main script
+        const skulptScript = document.createElement('script');
+        skulptScript.src = 'https://skulpt.org/js/skulpt.min.js';
+        skulptScript.async = true;
+        
+        skulptScript.onerror = () => {
+          console.error('Failed to load Skulpt');
+          reject(new Error('Failed to load Skulpt'));
+        };
+        
+        // Load Skulpt standard library after main script
+        skulptScript.onload = () => {
           const skulptStdlibScript = document.createElement('script');
           skulptStdlibScript.src = 'https://skulpt.org/js/skulpt-stdlib.js';
           skulptStdlibScript.async = true;
           
           skulptStdlibScript.onload = () => {
+            console.log('Skulpt successfully loaded');
             window.skulptReady = true;
             resolve();
           };
           
           skulptStdlibScript.onerror = () => {
+            console.error('Failed to load Skulpt standard library');
             reject(new Error('Failed to load Skulpt standard library'));
           };
           
-          skulptScript.onerror = () => {
-            reject(new Error('Failed to load Skulpt'));
-          };
-          
-          document.head.appendChild(skulptScript);
           document.head.appendChild(skulptStdlibScript);
-        });
-      };
+        };
+        
+        document.head.appendChild(skulptScript);
+      } catch (error) {
+        console.error('Error during Skulpt loading:', error);
+        reject(error);
+      }
+    });
+  }
+
+  /**
+   * Load JSCPP (C in browser) from CDN
+   */
+  private loadJSCPP(): Promise<void> {
+    if (window.Module) {
+      return Promise.resolve();
     }
-    
-    return window.loadSkulpt!();
+
+    return new Promise<void>((resolve, reject) => {
+      try {
+        const jscppScript = document.createElement('script');
+        jscppScript.src = 'https://cdn.jsdelivr.net/npm/jscpp@2.0.2/dist/JSCPP.es5.min.js';
+        jscppScript.async = true;
+
+        jscppScript.onload = () => {
+          console.log('JSCPP loaded successfully');
+          resolve();
+        };
+
+        jscppScript.onerror = () => {
+          reject(new Error('Failed to load JSCPP'));
+        };
+
+        document.head.appendChild(jscppScript);
+      } catch (error) {
+        reject(error);
+      }
+    });
   }
 
   /**
@@ -166,11 +212,13 @@ class CodeExecutor {
    */
   private async executePython(code: string, outputCallback: OutputCallback): Promise<void> {
     try {
+      outputCallback('info', 'Loading Python interpreter...');
+      
       // Load Skulpt if not already loaded
       await this.loadSkulptIfNeeded();
       
       if (!window.Sk) {
-        outputCallback('error', 'Failed to load Python interpreter. Please try again.');
+        outputCallback('error', 'Failed to load Python interpreter. Please try again or refresh the page.');
         return;
       }
 
@@ -281,6 +329,80 @@ class CodeExecutor {
         outputCallback('error', `Error applying CSS: ${error.message}`);
       } else {
         outputCallback('error', 'An unknown error occurred while applying CSS.');
+      }
+    }
+  }
+
+  /**
+   * Execute C code using JSCPP
+   */
+  private async executeC(code: string, outputCallback: OutputCallback): void {
+    try {
+      outputCallback('info', 'Loading C interpreter...');
+      
+      await this.loadJSCPP();
+      
+      if (!window.JSCPP) {
+        outputCallback('error', 'Failed to load C interpreter. Please try again or refresh the page.');
+        return;
+      }
+      
+      outputCallback('info', 'Running C code...');
+      
+      // Setup C input handler
+      let inputBuffer: string[] = [];
+      let inputIndex = 0;
+      
+      // Create custom input function
+      const getInput = () => {
+        return new Promise<string>((resolve) => {
+          if (inputIndex < inputBuffer.length) {
+            // Use existing input if available
+            resolve(inputBuffer[inputIndex++]);
+          } else {
+            // Otherwise, request new input
+            outputCallback('info', 'Enter input:');
+            this.waitForInput = (input: string) => {
+              this.waitForInput = null;
+              inputBuffer.push(input);
+              resolve(input);
+            };
+          }
+        });
+      };
+      
+      // Configure C execution
+      const config = {
+        stdio: {
+          write: (text: string) => {
+            outputCallback('output', text);
+          },
+          read: async () => {
+            const input = await getInput();
+            return input;
+          }
+        }
+      };
+      
+      // Execute the C code
+      try {
+        const result = window.JSCPP.run(code, '', config);
+        if (result !== undefined && result !== null && result !== '') {
+          outputCallback('output', `Result: ${result}`);
+        }
+      } catch (error) {
+        if (error instanceof Error) {
+          outputCallback('error', `C Error: ${error.message}`);
+        } else {
+          outputCallback('error', `C Error: ${String(error)}`);
+        }
+      }
+      
+    } catch (error) {
+      if (error instanceof Error) {
+        outputCallback('error', `Error: ${error.message}`);
+      } else {
+        outputCallback('error', 'An unknown error occurred while executing C code.');
       }
     }
   }

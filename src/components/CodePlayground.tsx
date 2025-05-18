@@ -17,7 +17,7 @@ interface TerminalMessage {
   content: string;
 }
 
-type SupportedLanguage = 'javascript' | 'python' | 'html' | 'css';
+type SupportedLanguage = 'javascript' | 'python' | 'html' | 'css' | 'c';
 
 const CodePlayground: React.FC = () => {
   const [code, setCode] = useState(codeExamples[0].code);
@@ -202,6 +202,14 @@ const CodePlayground: React.FC = () => {
               className="text-xs"
             >
               CSS
+            </Button>
+            <Button 
+              variant={language === 'c' ? "default" : "outline"}
+              size="sm"
+              onClick={() => handleLanguageChange('c')}
+              className="text-xs"
+            >
+              C
             </Button>
           </div>
         </div>
